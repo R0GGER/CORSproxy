@@ -1,8 +1,15 @@
 # CORSproxy
 
-CORSproxy is a lightweight CORS proxy with a simple and modern web UI, built-in test endpoint, and file-based request statistics.
+CORSproxy is a lightweight CORS proxy with a simple and modern web UI.
 
-## Start the application (Docker only)
+- **Proxy public URLs** with permissive CORS headers (`Access-Control-Allow-Origin: *`).
+- **Modern web UI** to quickly fetch and inspect responses.
+- **Quick test endpoint** for checking status/CORS/content preview from the browser.
+- **Persistent stats storage** in a JSON file (not memory-only).
+- **Stats ignore list** via `data/ignorelist.txt` (optionally extended with `STATS_IGNORE`).
+- **Relative path support** using `Referer` host mapping.
+
+## Start CORSproxy
 
 ### Option 1: Docker Compose (recommended)
 
@@ -34,14 +41,37 @@ Stop and remove:
 docker rm -f corsproxy
 ```
 
-## Features
+## Docker environment variables
 
-- **Proxy public URLs** with permissive CORS headers (`Access-Control-Allow-Origin: *`).
-- **Modern web UI** to quickly fetch and inspect responses.
-- **Quick test endpoint** for checking status/CORS/content preview from the browser.
-- **Persistent stats storage** in a JSON file (not memory-only).
-- **Stats ignore list** via `data/ignorelist.txt` (optionally extended with `STATS_IGNORE`).
-- **Relative path support** using `Referer` host mapping.
+Use these in Docker or `docker-compose.yml`:
+
+- `PORT` (default: `3080`)
+- `BASE_URL` (optional public base URL, e.g. `https://cors.hibbit.cloud`)
+- `STATS_MAX_ENTRIES` (default: `5000`, set `0` to disable stats)
+- `STATS_IGNORE` (optional comma-separated extra substrings to ignore in stats)
+- `STATS_FILE` (default: `/app/data/stats.json` in Docker Compose)
+- `STATS_IGNORE_FILE` (default: `/app/data/ignorelist.txt` in Docker Compose)
+
+## Persistent stats file in Docker
+
+The provided `docker-compose.yml` mounts:
+
+- `./data:/app/data`
+
+This keeps `stats.json` on your host machine so stats survive container restarts and rebuilds.
+
+Default ignore list file:
+
+- `data/ignorelist.txt`
+
+Enviroment variable via `docker-compose.yml` (optional):
+
+- `STATS_IGNORE=favicon.ico,apple-touch-icon.png,robots.txt`
+
+So ignore rules come from both:
+
+- `data/ignorelist.txt`
+- `STATS_IGNORE` (extra patterns from environment)
 
 ## URL endpoints
 
@@ -96,35 +126,3 @@ Shows:
 - counts by country,
 - counts by OS,
 - top target URLs.
-
-## Docker environment variables
-
-Use these in Docker or `docker-compose.yml`:
-
-- `PORT` (default: `3080`)
-- `BASE_URL` (optional public base URL, e.g. `https://cors.hibbit.cloud`)
-- `STATS_MAX_ENTRIES` (default: `5000`, set `0` to disable stats)
-- `STATS_IGNORE` (optional comma-separated extra substrings to ignore in stats)
-- `STATS_FILE` (default: `/app/data/stats.json` in Docker Compose)
-- `STATS_IGNORE_FILE` (default: `/app/data/ignorelist.txt` in Docker Compose)
-
-## Persistent stats file in Docker
-
-The provided `docker-compose.yml` mounts:
-
-- `./data:/app/data`
-
-This keeps `stats.json` on your host machine so stats survive container restarts and rebuilds.
-
-Default ignore list file:
-
-- `data/ignorelist.txt`
-
-Enviroment variable via `docker-compose.yml` (optional):
-
-- `STATS_IGNORE=favicon.ico,apple-touch-icon.png,robots.txt`
-
-So ignore rules come from both:
-
-- `data/ignorelist.txt`
-- `STATS_IGNORE` (extra patterns from environment)
