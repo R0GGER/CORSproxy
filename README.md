@@ -26,7 +26,7 @@ services:
       - STATS_FILE=/app/data/stats.json
       #- STATS_IGNORE=favicon.ico,apple-touch-icon.png,robots.txt
       # Optional: public URL (e.g. behind reverse proxy with HTTPS)
-      #- BASE_URL=https://cors.hibbit.cloud
+      #- BASE_URL=https://corsproxy.nl
     restart: unless-stopped
 ```
 
