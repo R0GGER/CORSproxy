@@ -13,15 +13,29 @@ CORSproxy is a lightweight CORS proxy with a simple and modern web UI.
 
 ### Option 1: Docker Compose (recommended)
 
-Use the provided `docker-compose.yml`:
+```yaml
+services:
+  corsproxy:
+    image: ghcr.io/r0gger/corsproxy:latest
+    ports:
+      - "3080:3080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3080
+      - STATS_FILE=/app/data/stats.json
+      #- STATS_IGNORE=favicon.ico,apple-touch-icon.png,robots.txt
+      # Optional: public URL (e.g. behind reverse proxy with HTTPS)
+      #- BASE_URL=https://cors.hibbit.cloud
+    restart: unless-stopped
+```
+
 
 ```bash
-docker compose pull
 docker compose up -d
 ```
 
 Stop:
-
 ```bash
 docker compose down
 ```
