@@ -248,6 +248,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname === '/favicon.svg' || url.pathname === '/favicon.ico') {
+    servePublicFile(res, 'favicon.svg', 'image/svg+xml');
+    return;
+  }
+
   // Stats endpoint: /stats or /?stats (JSON or HTML)
   if (url.pathname === '/stats' || url.searchParams.has('stats')) {
     const wantsJson = url.searchParams.get('format') === 'json' || req.headers.accept?.includes('application/json');

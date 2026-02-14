@@ -132,6 +132,33 @@ button:disabled {
   grid-template-columns: 1fr 1fr;
 }
 
+.app-footer {
+  margin-top: 22px;
+  padding: 12px 0 2px;
+  display: flex;
+  justify-content: center;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.18s ease;
+}
+
+.github-link:hover {
+  color: var(--accent);
+}
+
+.github-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;

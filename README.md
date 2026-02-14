@@ -1,6 +1,6 @@
 # CORSproxy
 
-CORSproxy is a lightweight CORS proxy with a modern web UI, built-in test endpoint, and file-based request statistics.
+CORSproxy is a lightweight CORS proxy with a simple and modern web UI, built-in test endpoint, and file-based request statistics.
 
 ## Start the application (Docker only)
 
