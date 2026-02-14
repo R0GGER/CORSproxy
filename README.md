@@ -2,6 +2,8 @@
 
 CORSproxy is a lightweight CORS proxy with a simple and modern web UI.
 
+**Demo:** https://corsproxy.nl
+
 - **Proxy public URLs** with permissive CORS headers (`Access-Control-Allow-Origin: *`).
 - **Modern web UI** to quickly fetch and inspect responses.
 - **Quick test endpoint** for checking status/CORS/content preview from the browser.
