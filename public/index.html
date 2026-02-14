@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CORSproxy</title>
+  <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <h1>CORSproxy</h1>
+      <p>Fetch any public URL through your proxy endpoint.</p>
+    </header>
+
+    <section class="card form-card">
+      <label for="targetUrl">Target URL</label>
+      <div class="row">
+        <input id="targetUrl" type="url" placeholder="https://example.com/data.json" autocomplete="off">
+        <button id="fetchBtn" type="button">Fetch</button>
+        <button id="copyBtn" type="button" class="btn-secondary">
+          <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M16 1H8a2 2 0 0 0-2 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2h2a2 2 0 0 0 2-2V7zm-8 2h8v2H8zm7 18H5V7h10zm5-4h-2V7a2 2 0 0 0-2-2H8V3h8l4 4z"></path>
+          </svg>
+          <span>Copy URL</span>
+        </button>
+      </div>
+      <div class="row row-small">
+        <span id="proxyPath" class="muted"></span>
+      </div>
+      <div class="row row-small">
+        <span id="fullProxyUrl" class="muted"></span>
+        <span id="copyStatus" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Response</h2>
+        <div class="meta">
+          <span><strong>Status:</strong> <span id="statusCode">-</span></span>
+          <span><strong>Content-Type:</strong> <span id="contentType">-</span></span>
+          <span><strong>Length:</strong> <span id="contentLength">-</span></span>
+        </div>
+        <pre id="responsePreview" class="preview">No response yet.</pre>
+      </article>
+
+      <article class="card">
+        <h2>Headers</h2>
+        <pre id="headersPreview" class="preview">No headers yet.</pre>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const targetEl = document.getElementById('targetUrl');
+    const fetchBtn = document.getElementById('fetchBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const proxyPathEl = document.getElementById('proxyPath');
+    const fullProxyUrlEl = document.getElementById('fullProxyUrl');
+    const copyStatusEl = document.getElementById('copyStatus');
+    const statusCodeEl = document.getElementById('statusCode');
+    const contentTypeEl = document.getElementById('contentType');
+    const contentLengthEl = document.getElementById('contentLength');
+    const responsePreviewEl = document.getElementById('responsePreview');
+    const headersPreviewEl = document.getElementById('headersPreview');
+
+    function buildProxyPath(rawInput) {
+      const parsed = new URL(rawInput);
+      const hostAndPath = parsed.host + parsed.pathname + parsed.search;
+      if (parsed.protocol === 'http:') return '/http/' + hostAndPath;
+      return '/' + hostAndPath;
+    }
+
+    function setProxyPathText(path) {
+      proxyPathEl.textContent = path ? 'Proxy path: ' + path : '';
+    }
+
+    function buildFullProxyUrl(path) {
+      return window.location.origin + path;
+    }
+
+    function setFullProxyUrlText(path) {
+      fullProxyUrlEl.textContent = path ? buildFullProxyUrl(path) : '';
+    }
+
+    async function copyFullProxyUrl() {
+      const raw = targetEl.value.trim();
+      if (!raw) return;
+      let proxyPath = '';
+      try {
+        proxyPath = buildProxyPath(raw);
+      } catch {
+        copyStatusEl.textContent = 'Invalid URL';
+        return;
+      }
+
+      const fullUrl = buildFullProxyUrl(proxyPath);
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        copyStatusEl.textContent = 'Copied';
+      } catch {
+        copyStatusEl.textContent = 'Copy failed';
+      }
+      setTimeout(() => {
+        copyStatusEl.textContent = '';
+      }, 1800);
+    }
+
+    async function runFetch() {
+      const raw = targetEl.value.trim();
+      if (!raw) return;
+
+      let proxyPath = '';
+      try {
+        proxyPath = buildProxyPath(raw);
+      } catch {
+        responsePreviewEl.textContent = 'Invalid URL. Use a full URL like https://example.com/api';
+        return;
+      }
+
+      setProxyPathText(proxyPath);
+      setFullProxyUrlText(proxyPath);
+      fetchBtn.disabled = true;
+      fetchBtn.textContent = 'Loading...';
+
+      try {
+        const res = await fetch(proxyPath);
+        const text = await res.text();
+        const headers = {};
+        for (const [k, v] of res.headers.entries()) headers[k] = v;
+
+        statusCodeEl.textContent = String(res.status);
+        contentTypeEl.textContent = res.headers.get('content-type') || '-';
+        contentLengthEl.textContent = String(text.length) + ' bytes';
+        responsePreviewEl.textContent = text.slice(0, 20000);
+        headersPreviewEl.textContent = JSON.stringify(headers, null, 2);
+      } catch (err) {
+        statusCodeEl.textContent = 'error';
+        contentTypeEl.textContent = '-';
+        contentLengthEl.textContent = '-';
+        responsePreviewEl.textContent = err.message;
+        headersPreviewEl.textContent = '{}';
+      } finally {
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = 'Fetch';
+      }
+    }
+
+    fetchBtn.addEventListener('click', runFetch);
+    copyBtn.addEventListener('click', copyFullProxyUrl);
+    targetEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runFetch();
+    });
+    targetEl.addEventListener('input', () => {
+      const raw = targetEl.value.trim();
+      try {
+        const path = raw ? buildProxyPath(raw) : '';
+        setProxyPathText(path);
+        setFullProxyUrlText(path);
+      } catch {
+        setProxyPathText('');
+        setFullProxyUrlText('');
+      }
+    });
+  </script>
+</body>
+</html>

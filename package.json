@@ -1,0 +1,16 @@
+{
+  "name": "corsproxy",
+  "version": "1.0.0",
+  "description": "CORSproxy to load URLs in apps",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "optionalDependencies": {
+    "ip3country": "^3.0.0"
+  }
+}
