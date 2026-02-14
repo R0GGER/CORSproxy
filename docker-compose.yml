@@ -1,6 +1,6 @@
 services:
   corsproxy:
-    build: .
+    image: ghcr.io/r0gger/corsproxy:latest
     ports:
       - "3080:3080"
     volumes:

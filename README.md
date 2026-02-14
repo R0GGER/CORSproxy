@@ -16,7 +16,8 @@ CORSproxy is a lightweight CORS proxy with a simple and modern web UI.
 Use the provided `docker-compose.yml`:
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Stop:
@@ -31,8 +32,8 @@ Default URL:
 ### Option 2: Plain Docker
 
 ```bash
-docker build -t corsproxy .
-docker run -d --name corsproxy -p 3080:3080 corsproxy
+docker pull ghcr.io/r0gger/corsproxy:latest
+docker run -d --name corsproxy -p 3080:3080 ghcr.io/r0gger/corsproxy:latest
 ```
 
 Stop and remove:
