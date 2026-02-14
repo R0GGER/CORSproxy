@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 ```
 
-
+Start:
 ```bash
 docker compose up -d
 ```
