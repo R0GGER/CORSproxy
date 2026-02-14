@@ -12,9 +12,7 @@ try {
 }
 
 const PORT = process.env.PORT || 3080;
-/** Optional: public URL of the proxy (e.g. https://cors.hibbit.cloud). Otherwise Host from the request is used. */
 const BASE_URL = process.env.BASE_URL || process.env.PROXY_PUBLIC_URL || '';
-/** Max number of request entries to keep in memory (0 = disable stats). */
 const STATS_MAX_ENTRIES = Math.max(0, parseInt(process.env.STATS_MAX_ENTRIES || '5000', 10));
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const STATS_FILE = process.env.STATS_FILE || path.join(__dirname, 'data', 'stats.json');
@@ -129,17 +127,10 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-/**
- * Whether the first path segment looks like a hostname (contains a dot) or a relative path.
- */
 function looksLikeHost(segment) {
   return segment && segment.includes('.');
 }
 
-/**
- * Extracts the base host from a Referer of our proxy, e.g. .../feeds.nos.nl/... → feeds.nos.nl.
- * Compares hostname only (not scheme/port) so https://cors.hibbit.cloud and local http both work.
- */
 function baseHostFromReferer(referer, proxyOrigin) {
   if (!referer || !proxyOrigin) return null;
   try {
