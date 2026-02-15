@@ -26,6 +26,7 @@ services:
     environment:
       - PORT=3080
       - STATS_FILE=/app/data/stats.json
+      - STATS_USERNAME=admin
       - STATS_PASSWORD=change-this-password
       #- STATS_IGNORE=favicon.ico,apple-touch-icon.png,robots.txt
       # Optional: public URL (e.g. behind reverse proxy with HTTPS)
@@ -69,7 +70,8 @@ Use these in Docker or `docker-compose.yml`:
 - `STATS_IGNORE` (optional comma-separated extra substrings to ignore in stats)
 - `STATS_FILE` (default: `/app/data/stats.json` in Docker Compose)
 - `STATS_IGNORE_FILE` (default: `/app/data/ignorelist.txt` in Docker Compose)
-- `STATS_PASSWORD` (required for `/stats`; use HTTP Basic Auth password)
+- `STATS_USERNAME` (required for `/stats`; HTTP Basic Auth username)
+- `STATS_PASSWORD` (required for `/stats`; HTTP Basic Auth password)
 
 ## Persistent stats file in Docker
 
@@ -141,7 +143,7 @@ Returns test diagnostics such as:
 
 Authentication:
 - `/stats` and `/?stats` require HTTP Basic Auth.
-- Username can be any value; password must match `STATS_PASSWORD`.
+- Username must match `STATS_USERNAME`; password must match `STATS_PASSWORD`.
 - Without valid credentials, stats always returns `401 Unauthorized`.
 
 Shows:

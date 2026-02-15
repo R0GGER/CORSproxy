@@ -14,6 +14,7 @@ try {
 const PORT = process.env.PORT || 3080;
 const BASE_URL = process.env.BASE_URL || process.env.PROXY_PUBLIC_URL || '';
 const STATS_MAX_ENTRIES = Math.max(0, parseInt(process.env.STATS_MAX_ENTRIES || '5000', 10));
+const STATS_USERNAME = process.env.STATS_USERNAME || '';
 const STATS_PASSWORD = process.env.STATS_PASSWORD || '';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const STATS_FILE = process.env.STATS_FILE || path.join(__dirname, 'data', 'stats.json');
@@ -129,14 +130,17 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-function readBasicAuthPassword(req) {
+function readBasicAuthCredentials(req) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Basic ')) return null;
   try {
     const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
     const sep = decoded.indexOf(':');
     if (sep < 0) return null;
-    return decoded.slice(sep + 1);
+    return {
+      username: decoded.slice(0, sep),
+      password: decoded.slice(sep + 1),
+    };
   } catch {
     return null;
   }
@@ -288,8 +292,13 @@ const server = http.createServer(async (req, res) => {
 
   // Stats endpoint: /stats or /?stats (JSON or HTML)
   if (url.pathname === '/stats' || url.searchParams.has('stats')) {
-    const providedPassword = readBasicAuthPassword(req);
-    if (!STATS_PASSWORD || providedPassword !== STATS_PASSWORD) {
+    const credentials = readBasicAuthCredentials(req);
+    const hasValidConfig = STATS_USERNAME && STATS_PASSWORD;
+    const isValidAuth =
+      credentials &&
+      credentials.username === STATS_USERNAME &&
+      credentials.password === STATS_PASSWORD;
+    if (!hasValidConfig || !isValidAuth) {
       writeStatsUnauthorized(res);
       return;
     }
