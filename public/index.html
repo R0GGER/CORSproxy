@@ -99,7 +99,12 @@
     }
 
     function setFullProxyUrlText(path) {
-      fullProxyUrlEl.textContent = path ? buildFullProxyUrl(path) : '';
+      if (!path) {
+        fullProxyUrlEl.textContent = '';
+        return;
+      }
+      const fullUrl = buildFullProxyUrl(path);
+      fullProxyUrlEl.innerHTML = 'Open: <a href="' + fullUrl + '" target="_blank" rel="noopener noreferrer">' + fullUrl + '</a>';
     }
 
     async function copyFullProxyUrl() {
