@@ -14,6 +14,7 @@ try {
 const PORT = process.env.PORT || 3080;
 const BASE_URL = process.env.BASE_URL || process.env.PROXY_PUBLIC_URL || '';
 const STATS_MAX_ENTRIES = Math.max(0, parseInt(process.env.STATS_MAX_ENTRIES || '5000', 10));
+const STATS_PASSWORD = process.env.STATS_PASSWORD || '';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const STATS_FILE = process.env.STATS_FILE || path.join(__dirname, 'data', 'stats.json');
 const STATS_IGNORE_FILE = process.env.STATS_IGNORE_FILE || path.join(path.dirname(STATS_FILE), 'ignorelist.txt');
@@ -126,6 +127,28 @@ function escapeHtml(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function readBasicAuthPassword(req) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Basic ')) return null;
+  try {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
+    const sep = decoded.indexOf(':');
+    if (sep < 0) return null;
+    return decoded.slice(sep + 1);
+  } catch {
+    return null;
+  }
+}
+
+function writeStatsUnauthorized(res) {
+  res.writeHead(401, {
+    ...CORS_HEADERS,
+    'Content-Type': 'application/json',
+    'WWW-Authenticate': 'Basic realm="CORSproxy stats", charset="UTF-8"',
+  });
+  res.end(JSON.stringify({ error: 'Unauthorized' }));
 }
 
 function looksLikeHost(segment) {
@@ -265,6 +288,12 @@ const server = http.createServer(async (req, res) => {
 
   // Stats endpoint: /stats or /?stats (JSON or HTML)
   if (url.pathname === '/stats' || url.searchParams.has('stats')) {
+    const providedPassword = readBasicAuthPassword(req);
+    if (!STATS_PASSWORD || providedPassword !== STATS_PASSWORD) {
+      writeStatsUnauthorized(res);
+      return;
+    }
+
     const wantsJson = url.searchParams.get('format') === 'json' || req.headers.accept?.includes('application/json');
     const visibleEntries = statsEntries.filter((e) => isLikelyProxyTargetUrl(e.targetUrl || e.url));
     const total = visibleEntries.length;
