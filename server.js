@@ -102,6 +102,7 @@ function parseOS(ua) {
 
 function recordStats(req, url, targetUrl) {
   if (STATS_MAX_ENTRIES <= 0) return;
+  if (!isLikelyProxyTargetUrl(targetUrl)) return;
   const u = (url || '').toLowerCase();
   const t = (targetUrl || '').toLowerCase();
   if (STATS_IGNORE.some((pattern) => u.includes(pattern) || t.includes(pattern))) return;
@@ -128,7 +129,23 @@ function escapeHtml(s) {
 }
 
 function looksLikeHost(segment) {
-  return segment && segment.includes('.');
+  if (!segment) return false;
+  const host = segment.replace(/^\[|\]$/g, '').toLowerCase();
+  if (host === 'localhost') return true;
+  if (host.includes('.')) return true;
+  if (host.includes(':')) return true; // covers IPv6 and host:port
+  return false;
+}
+
+function isLikelyProxyTargetUrl(targetUrl) {
+  if (!targetUrl) return false;
+  try {
+    const parsed = new URL(targetUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    return looksLikeHost(parsed.hostname);
+  } catch {
+    return false;
+  }
 }
 
 function baseHostFromReferer(referer, proxyOrigin) {
@@ -168,6 +185,8 @@ function parseTargetUrl(pathname, search, referer, proxyOrigin) {
     const base = baseHostFromReferer(referer, proxyOrigin);
     if (base) {
       rest = base + '/' + rest;
+    } else {
+      return null;
     }
   }
 
@@ -247,11 +266,12 @@ const server = http.createServer(async (req, res) => {
   // Stats endpoint: /stats or /?stats (JSON or HTML)
   if (url.pathname === '/stats' || url.searchParams.has('stats')) {
     const wantsJson = url.searchParams.get('format') === 'json' || req.headers.accept?.includes('application/json');
-    const total = statsEntries.length;
+    const visibleEntries = statsEntries.filter((e) => isLikelyProxyTargetUrl(e.targetUrl || e.url));
+    const total = visibleEntries.length;
     const byCountry = {};
     const byOs = {};
     const byUrl = {};
-    for (const e of statsEntries) {
+    for (const e of visibleEntries) {
       byCountry[e.country ?? '(unknown)'] = (byCountry[e.country ?? '(unknown)'] || 0) + 1;
       byOs[e.os ?? '(unknown)'] = (byOs[e.os ?? '(unknown)'] || 0) + 1;
       const u = e.targetUrl || e.url;
@@ -259,7 +279,7 @@ const server = http.createServer(async (req, res) => {
     }
     const payload = {
       total,
-      recent: statsEntries.slice(-100).reverse(),
+      recent: visibleEntries.slice(-100).reverse(),
       byCountry: Object.entries(byCountry).sort((a, b) => b[1] - a[1]),
       byOs: Object.entries(byOs).sort((a, b) => b[1] - a[1]),
       byUrl: Object.entries(byUrl)
