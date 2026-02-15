@@ -1,6 +1,7 @@
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const net = require('net');
 const path = require('path');
 
 let ip3country = null;
@@ -19,6 +20,24 @@ const STATS_PASSWORD = process.env.STATS_PASSWORD || '';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const STATS_FILE = process.env.STATS_FILE || path.join(__dirname, 'data', 'stats.json');
 const STATS_IGNORE_FILE = process.env.STATS_IGNORE_FILE || path.join(path.dirname(STATS_FILE), 'ignorelist.txt');
+const SUSPICIOUS_HOST_EXTENSIONS = new Set([
+  'txt',
+  'php',
+  'env',
+  'js',
+  'json',
+  'xml',
+  'yml',
+  'yaml',
+  'ini',
+  'conf',
+  'cfg',
+  'config',
+  'bak',
+  'live',
+  'prod',
+  'production',
+]);
 
 function parseIgnoreList(text) {
   return String(text || '')
@@ -155,12 +174,28 @@ function writeStatsUnauthorized(res) {
   res.end(JSON.stringify({ error: 'Unauthorized' }));
 }
 
+function isSuspiciousHostName(hostname) {
+  if (!hostname) return true;
+  const host = String(hostname).toLowerCase();
+  if (host.startsWith('.') || host.endsWith('.')) return true;
+  const labels = host.split('.').filter(Boolean);
+  if (labels.length === 0) return true;
+  const ext = labels[labels.length - 1];
+  return SUSPICIOUS_HOST_EXTENSIONS.has(ext);
+}
+
 function looksLikeHost(segment) {
   if (!segment) return false;
   const host = segment.replace(/^\[|\]$/g, '').toLowerCase();
   if (host === 'localhost') return true;
+  if (net.isIP(host)) return true;
+  if (isSuspiciousHostName(host)) return false;
   if (host.includes('.')) return true;
-  if (host.includes(':')) return true; // covers IPv6 and host:port
+  if (host.includes(':')) {
+    const parts = host.split(':');
+    if (parts.length === 2 && /^\d{1,5}$/.test(parts[1])) return looksLikeHost(parts[0]);
+    return net.isIP(host) > 0;
+  }
   return false;
 }
 
@@ -169,6 +204,7 @@ function isLikelyProxyTargetUrl(targetUrl) {
   try {
     const parsed = new URL(targetUrl);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    if (isSuspiciousHostName(parsed.hostname)) return false;
     return looksLikeHost(parsed.hostname);
   } catch {
     return false;
