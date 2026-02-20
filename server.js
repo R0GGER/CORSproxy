@@ -383,8 +383,6 @@ const server = http.createServer(async (req, res) => {
   <pre>${JSON.stringify(Object.fromEntries(payload.byCountry), null, 2)}</pre>
   <h2>By OS</h2>
   <pre>${JSON.stringify(Object.fromEntries(payload.byOs), null, 2)}</pre>
-  <h2>Top URLs</h2>
-  <pre>${JSON.stringify(Object.fromEntries(payload.byUrl), null, 2)}</pre>
   <h2>Recent requests (when, url, ip, country, OS)</h2>
   <table><thead><tr><th>Time</th><th>URL</th><th>IP</th><th>Country</th><th>OS</th></tr></thead><tbody>${rows}</tbody></table>
   <p><a href="${escapeHtml(proxyOrigin + '/stats?format=json')}">View as JSON</a></p>
